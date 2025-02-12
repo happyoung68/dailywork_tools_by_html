@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CCU网络管理数据解读</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+           
+            background: linear-gradient(45deg, #283c86, #45a247);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 140vh;
+        }
+        .header {
+            
+            margin-bottom: 20px;
+            display: flex;
+            position: absolute; /* 子元素使用绝对定位 */
+            top: -20px; /* 从顶部偏移 20 像素 */
+            left: 50%; /* 水平居中 */
+            transform: translateX(-50%); /* 修正偏移 */
+            font-size: 3.3em;
+            color: red;
+           
+        }
+        .header img {
+            display: inline-block; /* 图片以行内块元素显示 */
+            vertical-align: text-bottom; /* 垂直居中对齐 */
+            margin-left: 0px; /* 图片与文本之间留有一定间距 */
+            max-height: 60px; /* 将图片最大高度设为50px */
+            width: auto; /* 保持图片宽高比 */
+        }
+        .container-wrapper {
+            display: flex;
+            justify-content: space-around; /* 或者其他适合的 justify-content 属性 */
+            gap: 40px; /* 设置子元素之间的间距 */
+            flex-wrap: wrap; /* 如果希望在一行排不下时换行 */
+            margin-top: 0px; 
+            
+            
+        }
+        .container {
+            max-width: 350px;
+            max-height: 300px; /* 设置最大高度 */
+            overflow: auto; /* 添加滚动条 */
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            animation: fadeIn 0.6s ease-out;
+            margin-bottom: 20px; 
+            margin-top: 20px; 
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        h1 {
+            color: #333333;
+            margin-bottom: 20px;
+            font-size: 28px;
+            animation: scaleIn 0.6s ease-out;
+        }
+        @keyframes scaleIn {
+            from { transform: scale(0.8); }
+            to { transform: scale(1); }
+        }
+        label {
+            font-weight: normal;
+            display: block;
+            margin-bottom: 10px;
+            color: #333333;
+            font-size: 18px;
+        }
+        input[type="text"] {
+            width: calc(100% - 20px);
+            padding: 12px;
+            font-size: 16px;
+            border: none;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            box-sizing: border-box;
+            background-color: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            transition: box-shadow 0.3s ease;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        
+        .output {
+           
+            
+            text-align: left;
+            margin-top: 5px;
+            padding: 5px;
+            word-wrap: break-word;  /* 自动换行 */
+            word-break: break-all;  /* 防止长单词溢出 */
+        }
+        
+    </style>
+    <script>
+
+        function hexToAscii() {
+            var hexInput = document.getElementById('hex_input').value.trim();
+            try {
+                var byteData = new Uint8Array(hexInput.match(/[\da-f]{2}/gi).map(function (h) {
+                    return parseInt(h, 16);
+                }));
+                var asciiStr = new TextDecoder().decode(byteData);
+                document.getElementById('ascii_output').innerText = "ASCII Output：" + asciiStr;
+            } catch (e) {
+                document.getElementById('ascii_output').innerText = "Invalid hexadecimal input.";
+            }
+        }
+
+        function asciiToHex() {
+            var asciiInput = document.getElementById('ascii_input').value;  // 获取输入的 ASCII 字符串
+
+            try {
+                // 将 ASCII 字符串转换为十六进制表示
+                var hexResult = asciiInput.split('').map(function (char) {
+                    return ('0' + char.charCodeAt(0).toString(16)).slice(-2);
+                }).join('');
+
+                // 将十六进制结果显示在页面上
+                document.getElementById('hex_output').innerText = "Hex Output：" + hexResult.toUpperCase();
+            } catch (e) {
+                // 处理异常情况：如果输入不是有效的 ASCII 字符串
+                document.getElementById('hex_output').innerText = "Invalid ASCII input.";
+            }
+        }
+
+
+        function handleNumber_rt1() {
+            var RT1_signals = [
+                
+            ];
+            var numInput = document.getElementById('rt1_num_input').value;
+            try {
+                // 1. 使用正则表达式将多个连续空格替换为单个空格，然后去除首尾的空格
+                var cleanedInput = numInput.replace(/\s+/g, ' ').trim();
+
+                // 2. 分割字符串，得到每个单独的十进制数字
+                var decimalNumbers = cleanedInput.split(" ");
+
+                // 3. 转换为八位二进制字符串并存入数组
+                var binaryArray = [];
+                for (var i = 0; i < decimalNumbers.length; i++) {
+                    // 将十进制字符串转换为整数
+                    var decimal = parseInt(decimalNumbers[i].trim());
+                    // 将整数转换为八位二进制字符串
+                    var binaryString = decimal.toString(2).padStart(8, '0');
+                    // 存入数组
+                    binaryArray.push(binaryString);
+                }
+                for (var i = 0; i < binaryArray.length; i++) {
+                    binaryArray[i] += "==>"
+                    for (var j = 0; j < 8; j++) {
+                        if (binaryArray[i][j] == "1"){
+                            binaryArray[i] +=  RT1_signals[i][7-j] + "++"
+                        }
+                    }
+                }               
+
+                // // 将处理后的结果输出到结果容器中
+                var resultOutput = document.getElementById('rt1_result_output');
+                resultOutput.innerText = binaryArray.join("\n");
+                // document.getElementById('rt1_result_output').innerText = binaryArray[0] + binaryArray[1];
+            } catch (e) {
+                document.getElementById('rt1_result_output').innerText = "Invalid input.";
+            }
+        }
+        function handleNumber_rt2() {
+            
+        }
+        function handleNumber_pnc() {
+            
+        }
+        function handleNumber_a() {
+            
+        }
+
+
+        function handleNumber_big_a() {
+          
+        }
+
+        function handleNumber_waups() {
+            var waups = {
+               
+                // 其他映射关系
+            };
+            var numInput = document.getElementById('waups_num_input').value;
+            try {
+                // 1. 使用正则表达式将多个连续空格替换为单个空格，然后去除首尾的空格
+                var cleanedInput = numInput.replace(/\s+/g, ' ').trim();
+
+                // 2. 分割字符串，得到每个单独的十进制数字
+                var decimalNumbers = cleanedInput.split(" ");
+                for (var i = 0; i < decimalNumbers.length; i++) {
+                    var decimal = parseInt(decimalNumbers[i])
+                    decimalNumbers[i] = decimal.toString();
+                }
+                for (var i = 0; i < decimalNumbers.length; i++) { 
+                    if (decimalNumbers[i] in waups) {
+                        var temp = decimalNumbers[i]
+                        decimalNumbers[i] += "==>" + waups[temp]
+                    } else {
+                        decimalNumbers[i] += "==>查无此数"
+                    }
+                }               
+
+                // // 将处理后的结果输出到结果容器中
+                var resultOutput = document.getElementById('waups_result_output');
+                resultOutput.innerText = decimalNumbers.join("\n");
+                // document.getElementById('waups_result_output').innerText = binaryArray[0] + binaryArray[1];
+            } catch (e) {
+                document.getElementById('waups_result_output').innerText = "Invalid input.";
+            }
+        }
+
+        function handleNumber_waupo() {
+          
+        }
+
+        function handleNumber_outid() {
+           
+        }
+
+        function handleNumber_time() {
+            
+            var numInput = document.getElementById('time_num_input').value;
+            try {
+                // 1. 使用正则表达式将多个连续空格替换为单个空格，然后去除首尾的空格
+                var cleanedInput = numInput.replace(/\s+/g, ' ').trim();
+
+                // 2. 分割字符串，得到每个单独的十进制数字
+                var decimalNumbers = cleanedInput.split(" ");
+
+                for (var i = 0; i < decimalNumbers.length; i++) { 
+                  
+                    // var temp = parseInt(decimalNumbers[i]);  // 将字符串转换为整数
+                    // var date = new Date(temp);
+                    // decimalNumbers[i] = `${temp}++${date}`; // 使用模板字符串来格式化输出
+
+
+
+                    var temp = parseInt(decimalNumbers[i]);  // 将字符串转换为整数
+                    var date = new Date(temp);
+
+                    // 获取年、月、日、时、分、秒并格式化为“年-月-日 时:分:秒”
+                    // 获取年、月、日、时、分、秒、毫秒并格式化为“年-月-日 时:分:秒.毫秒”
+                    var year = date.getFullYear();
+                    var month = String(date.getMonth() + 1).padStart(2, '0'); // 月份从0开始，需要加1，并确保两位数
+                    var day = String(date.getDate()).padStart(2, '0'); // 确保两位数
+                    var hours = String(date.getHours()).padStart(2, '0');
+                    var minutes = String(date.getMinutes()).padStart(2, '0');
+                    var seconds = String(date.getSeconds()).padStart(2, '0');
+                    var milliseconds = String(date.getMilliseconds()).padStart(3, '0'); // 确保六位数
+
+                    // 格式化日期时间字符串
+                    var formattedDateTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.${milliseconds}`;
+                    decimalNumbers[i] = `${temp}==>${formattedDateTime}`; // 使用模板字符串来格式化输出
+                }               
+
+                // // 将处理后的结果输出到结果容器中
+                var resultOutput = document.getElementById('time_result_output');
+                resultOutput.innerText = decimalNumbers.join("\n");
+                // document.getElementById('time_result_output').innerText = binaryArray[0] + binaryArray[1];
+            } catch (e) {
+                document.getElementById('time_result_output').innerText = "Invalid input.";
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="container-wrapper">
+        <div class="container">
+            <h1>十六进制转换为ASCII</h1>
+            <label for="hex_input">输入16进制数字:</label>
+            <input type="text" id="hex_input" required>
+            <button type="button" onclick="hexToAscii()">转换</button>
+            <div id="ascii_output" class="output"></div>
+        </div>
+
+        <div class="container">
+            <h1>ASCII转换为十六进制</h1>
+            <label for="ascii_input">输入ASCII字符:</label>
+            <input type="text" id="ascii_input" required>
+            <button type="button" onclick="asciiToHex()">转换</button>
+            <div id="hex_output" class="output"></div>
+        </div>
+        
+        <div class="container">
+            <h1>时间戳转换</h1>
+            <label for="time_num_input">输入时间戳(ms):</label>
+            <input type="text" id="time_num_input" required>
+            <button type="button" onclick="handleNumber_time()">解读</button>
+            <div id="time_result_output" class="output"></div>
+        </div>
+
+        <div class="container">
+            <h1>日志RT1解读</h1>
+            <label for="rt1_num_input">输入RT1数据(DEC/HEX)，空格分隔:</label>
+            <input type="text" id="rt1_num_input" required>
+            <button type="button" onclick="handleNumber_rt1()">解读</button>
+            <div id="rt1_result_output" class="output"></div>
+        </div>
+
+        <div class="container">
+            <h1>日志RT2解读</h1>
+            <label for="rt2_num_input">输入RT2数据(DEC/HEX)，空格分隔:</label>
+            <input type="text" id="rt2_num_input" required>
+            <button type="button" onclick="handleNumber_rt2()">解读</button>
+            <div id="rt2_result_output" class="output"></div>
+        </div>
+
+        <div class="container">
+            <h1>PNC解读</h1>
+            <label for="pnc_num_input">输入PNC数据(DEC):</label>
+            <input type="text" id="pnc_num_input" required>
+            <button type="button" onclick="handleNumber_pnc()">解读</button>
+            <div id="pnc_result_output" class="output"></div>
+        </div>
+
+        <div class="container">
+            <h1>日志A核解读</h1>
+            <label for="a_num_input">输入A核数据(DEC):</label>
+            <input type="text" id="a_num_input" required>
+            <button type="button" onclick="handleNumber_a()">解读</button>
+            <div id="a_result_output" class="output"></div>
+        </div>
+
+        <div class="container">
+            <h1>WakeupSource解读</h1>
+            <label for="waups_num_input">输入电源唤醒源数据(DEC/HEX):</label>
+            <input type="text" id="waups_num_input" required>
+            <button type="button" onclick="handleNumber_waups()">解读</button>
+            <div id="waups_result_output" class="output"></div>
+        </div>
+
+        <div class="container">
+            <h1>WakeupOrigin解读</h1>
+            <label for="waupo_num_input">输入网络唤醒源数据(DEC/HEX):</label>
+            <input type="text" id="waupo_num_input" required>
+            <button type="button" onclick="handleNumber_waupo()">解读</button>
+            <div id="waupo_result_output" class="output"></div>
+        </div>
+
+        <div class="container">
+            <h1>外部报文ID解读</h1>
+            <label for="outid_num_input">输入外部报文ID(HEX):</label>
+            <input type="text" id="outid_num_input" required>
+            <button type="button" onclick="handleNumber_outid()">解读</button>
+            <div id="outid_result_output" class="output"></div>
+        </div>
+
+        <div class="container">
+            <h1>大数据A核解读</h1>
+            <label for="big_a_num_input">输入A核数据(DEC):</label>
+            <input type="text" id="big_a_num_input" required>
+            <button type="button" onclick="handleNumber_big_a()">解读</button>
+            <div id="big_a_result_output" class="output"></div>
+        </div>
+    </div>
+</body>
+</html>
+
